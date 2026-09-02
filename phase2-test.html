@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Phase 2 — Issues List Test</title>
+<style>
+  body {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    padding: 32px 24px;
+    background: #f4f4f7;
+    max-width: 980px;
+    margin: 0 auto;
+    color: #1d1d1f;
+  }
+  h2 { margin: 0 0 4px; }
+  .sub { color: #6e6e73; margin-bottom: 20px; font-size: 14px; }
+  .card {
+    padding: 16px 18px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .pending { background: #eef1f6; color: #48484a; border: 1px solid #d8d8dc; }
+  .pass { background: #d4f7dc; color: #146c2e; border: 1px solid #34c759; }
+  .fail { background: #fde2e1; color: #a10e0e; border: 1px solid #ff3b30; }
+  .label { font-weight: 700; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; opacity: .65; margin-bottom: 4px; }
+  button {
+    background: #0a84ff; color: #fff; border: none; padding: 8px 16px;
+    border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-right: 6px;
+  }
+  button:hover { background: #0066cc; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.secondary { background: #e5e5ea; color: #1d1d1f; }
+  button.secondary:hover { background: #d1d1d6; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 10px; font-size: 13px; border-bottom: 1px solid #eee; }
+  th { background: #f0f0f3; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: #6e6e73; }
+  tr.issue-row { cursor: pointer; }
+  tr.issue-row:hover { background: #f5f9ff; }
+  tr.selected { background: #e8f2ff; }
+  .pill { display:inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .pill-new { background:#eee; color:#555; }
+  .pill-progress { background:#dbeeff; color:#0066cc; }
+  .pill-waiting { background:#ffe9cc; color:#a15c00; }
+  .pill-resolved { background:#d4f7dc; color:#146c2e; }
+  #detailPanel { margin-top: 20px; }
+  select, textarea { padding: 6px 8px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px; width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .field-label { font-size: 11px; font-weight: 700; color: #6e6e73; margin-bottom: 3px; }
+</style>
+</head>
+<body>
+
+<h2>Phase 2 — Issues List Test</h2>
+<div class="sub">Reads, edits, resolves, and re-opens real issues in the SharePoint <code>Issues</code> list.</div>
+
+<div id="signinCard" class="card pending">
+  <div class="label">Sign-in</div>
+  <div id="signinResult"><button id="loginBtn">Sign in with Microsoft</button></div>
+</div>
+
+<div id="listCard" class="card pending" style="display:none;">
+  <div class="label">Issues List</div>
+  <div id="listResult">Loading…</div>
+</div>
+
+<div id="tableWrap" style="display:none;">
+  <table id="issuesTable">
+    <thead>
+      <tr><th>Mall</th><th>Issue ID</th><th>Tenant</th><th>Status</th><th>Priority</th></tr>
+    </thead>
+    <tbody id="issuesBody"></tbody>
+  </table>
+
+  <div id="detailPanel"></div>
+</div>
+
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<script src="js/auth/authService.js"></script>
+<script src="js/storage/sharePointAdapter.js"></script>
+<script>
+  let allIssues = [];
+  let selectedId = null;
+
+  const signinCard = document.getElementById("signinCard");
+  const signinResult = document.getElementById("signinResult");
+  const listCard = document.getElementById("listCard");
+  const listResult = document.getElementById("listResult");
+  const tableWrap = document.getElementById("tableWrap");
+  const issuesBody = document.getElementById("issuesBody");
+  const detailPanel = document.getElementById("detailPanel");
+
+  function statusPillClass(status) {
+    if (status === "New") return "pill-new";
+    if (status === "In Progress") return "pill-progress";
+    if (status === "Waiting") return "pill-waiting";
+    if (status === "Resolved") return "pill-resolved";
+    return "pill-new";
+  }
+
+  async function loadIssues() {
+    listCard.style.display = "block";
+    listResult.textContent = "Loading…";
+    try {
+      allIssues = await window.App.SPStorage.getIssues();
+      listCard.className = "card pass";
+      listResult.innerHTML = "✅ Loaded " + allIssues.length + " issue(s) from SharePoint.";
+      renderTable();
+    } catch (e) {
+      listCard.className = "card fail";
+      listResult.textContent = "❌ " + e.message;
+      console.error(e);
+    }
+  }
+
+  function renderTable() {
+    tableWrap.style.display = "block";
+    issuesBody.innerHTML = allIssues
+      .map(
+        (i) =>
+          '<tr class="issue-row' + (i.issueId === selectedId ? " selected" : "") + '" data-id="' + i.issueId + '">' +
+          "<td>" + esc(i.mall) + "</td>" +
+          "<td>" + esc(i.issueId) + "</td>" +
+          "<td>" + esc(i.tenant) + "</td>" +
+          '<td><span class="pill ' + statusPillClass(i.status) + '">' + esc(i.status) + (i.waitingReason ? " · " + esc(i.waitingReason) : "") + "</span></td>" +
+          "<td>" + esc(i.priority) + "</td>" +
+          "</tr>"
+      )
+      .join("");
+
+    issuesBody.querySelectorAll("tr.issue-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        selectedId = row.getAttribute("data-id");
+        renderTable();
+        renderDetail();
+      });
+    });
+  }
+
+  function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function renderDetail() {
+    const issue = allIssues.find((i) => i.issueId === selectedId);
+    if (!issue) { detailPanel.innerHTML = ""; return; }
+
+    detailPanel.innerHTML =
+      '<div class="card pending">' +
+        '<div class="label">' + esc(issue.issueId) + " — " + esc(issue.tenant) + "</div>" +
+        '<div style="margin-bottom:10px; font-size:13px;">' + esc(issue.issue) + "</div>" +
+        '<div class="row">' +
+          '<div><div class="field-label">Priority</div><select id="fPriority">' +
+            ["Low","Medium","High","Urgent"].map((p) => '<option value="' + p + '"' + (p===issue.priority?" selected":"") + ">" + p + "</option>").join("") +
+          "</select></div>" +
+          '<div><div class="field-label">Remarks</div><textarea id="fRemarks" rows="1">' + esc(issue.remarks) + "</textarea></div>" +
+        "</div>" +
+        '<button id="saveBtn">Save Changes</button>' +
+        (issue.status !== "Resolved"
+          ? '<button id="resolveBtn" class="secondary">Mark Resolved</button>'
+          : '<button id="reopenBtn" class="secondary">Re-open Issue</button>') +
+        '<div id="detailMsg" style="margin-top:8px; font-size:12px;"></div>' +
+      "</div>";
+
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      await applyChange({ priority: document.getElementById("fPriority").value, remarks: document.getElementById("fRemarks").value }, "Saved.");
+    });
+    const resolveBtn = document.getElementById("resolveBtn");
+    if (resolveBtn) resolveBtn.addEventListener("click", async () => {
+      await runAction(() => window.App.SPStorage.resolveIssue(issue.issueId, window.App.AuthService.getAccount().name, document.getElementById("fRemarks").value), "Marked resolved.");
+    });
+    const reopenBtn = document.getElementById("reopenBtn");
+    if (reopenBtn) reopenBtn.addEventListener("click", async () => {
+      await runAction(() => window.App.SPStorage.reopenIssue(issue.issueId), "Re-opened.");
+    });
+  }
+
+  async function applyChange(changes, successMsg) {
+    await runAction(() => window.App.SPStorage.updateIssue(selectedId, changes), successMsg);
+  }
+
+  async function runAction(fn, successMsg) {
+    const msg = document.getElementById("detailMsg");
+    msg.textContent = "Working…";
+    try {
+      const result = await fn();
+      if (!result.ok) {
+        msg.textContent = "❌ " + Object.values(result.errors).join(" ");
+        return;
+      }
+      msg.textContent = "✅ " + successMsg;
+      await loadIssues();
+      renderDetail();
+    } catch (e) {
+      msg.textContent = "❌ " + e.message;
+      console.error(e);
+    }
+  }
+
+  async function init() {
+    try {
+      const account = await window.App.AuthService.init();
+      if (account) {
+        const user = await window.App.AuthService.getCurrentUser();
+        signinCard.className = "card pass";
+        signinResult.innerHTML = "✅ " + user.displayName + " <span style='opacity:.7;font-size:12px;'>(" + user.username + ")</span>";
+        await loadIssues();
+      } else {
+        document.getElementById("loginBtn").addEventListener("click", () => {
+          window.App.AuthService.login();
+        });
+      }
+    } catch (e) {
+      signinCard.className = "card fail";
+      signinResult.textContent = "❌ " + e.message;
+      console.error(e);
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>
