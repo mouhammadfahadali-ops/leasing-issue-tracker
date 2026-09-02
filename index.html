@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Phase 1 — Entra Sign-In Test</title>
+<style>
+  body {
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+    padding: 40px 24px;
+    background: #f4f4f7;
+    max-width: 640px;
+    margin: 0 auto;
+    color: #1d1d1f;
+  }
+  h2 { margin: 0 0 4px; }
+  .sub { color: #6e6e73; margin-bottom: 24px; font-size: 14px; }
+  .card {
+    padding: 18px 20px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .pending { background: #eef1f6; color: #48484a; border: 1px solid #d8d8dc; }
+  .pass { background: #d4f7dc; color: #146c2e; border: 1px solid #34c759; }
+  .fail { background: #fde2e1; color: #a10e0e; border: 1px solid #ff3b30; }
+  .label {
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 6px;
+  }
+  code { background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  button {
+    background: #0a84ff;
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #0066cc; }
+</style>
+</head>
+<body>
+
+<h2>Phase 1 — Entra Sign-In Test</h2>
+<div class="sub">Hosted on GitHub Pages. Tests Microsoft Entra sign-in (MSAL.js) + one authenticated SharePoint call.</div>
+
+<div id="signinCard" class="card pending">
+  <div class="label">Sign-in</div>
+  <div id="signinResult">
+    <button id="loginBtn">Sign in with Microsoft</button>
+  </div>
+</div>
+
+<div id="spCard" class="card pending" style="display:none;">
+  <div class="label">SharePoint connection</div>
+  <div id="spResult">Checking…</div>
+</div>
+
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+<script>
+  const msalConfig = {
+    auth: {
+      clientId: "e2d59c4f-5981-4cf5-a2e9-f72e1898a86d",
+      authority: "https://login.microsoftonline.com/2e13ddab-e83e-4fa8-91cf-4a601cdaa57d",
+      redirectUri: "https://mouhammadfahadali-ops.github.io/leasing-issue-tracker/",
+    },
+    cache: {
+      cacheLocation: "sessionStorage",
+    },
+  };
+
+  const SHAREPOINT_SITE = "https://dolmengroupcom.sharepoint.com/sites/DolmenLeasing";
+  const spScope = "https://dolmengroupcom.sharepoint.com/AllSites.Write";
+
+  const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+  const signinCard = document.getElementById("signinCard");
+  const signinResult = document.getElementById("signinResult");
+  const spCard = document.getElementById("spCard");
+  const spResult = document.getElementById("spResult");
+
+  function showSignedIn(account) {
+    signinCard.className = "card pass";
+    signinResult.innerHTML =
+      "✅ " + account.name + "<br><span style='opacity:.7; font-size:13px;'>" + account.username + "</span>";
+  }
+
+  async function testSharePointCall(account) {
+    spCard.style.display = "block";
+    try {
+      const tokenResponse = await msalInstance.acquireTokenSilent({
+        scopes: [spScope],
+        account: account,
+      });
+      const res = await fetch(SHAREPOINT_SITE + "/_api/web/title", {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + tokenResponse.accessToken,
+          Accept: "application/json;odata=verbose",
+        },
+      });
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      const data = await res.json();
+      spCard.className = "card pass";
+      spResult.innerHTML = "✅ Connected to site: <code>" + data.d.Title + "</code>";
+    } catch (e) {
+      spCard.className = "card fail";
+      spResult.textContent = "❌ " + e.message;
+      console.error(e);
+    }
+  }
+
+  async function init() {
+    try {
+      const response = await msalInstance.handleRedirectPromise();
+      let account = null;
+      if (response && response.account) {
+        account = response.account;
+      } else {
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length > 0) account = accounts[0];
+      }
+
+      if (account) {
+        showSignedIn(account);
+        await testSharePointCall(account);
+      } else {
+        document.getElementById("loginBtn").addEventListener("click", () => {
+          msalInstance.loginRedirect({ scopes: [spScope] });
+        });
+      }
+    } catch (e) {
+      signinCard.className = "card fail";
+      signinResult.textContent = "❌ " + e.message;
+      console.error(e);
+    }
+  }
+
+  init();
+</script>
+
+</body>
+</html>
