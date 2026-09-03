@@ -286,10 +286,53 @@
     return { ok: true, issue: created };
   }
 
+  // One-time migration helper: insert an issue with its ORIGINAL id and
+  // timestamps preserved exactly (no Counter reservation, no "now" stamps).
+  // `issue` is a full app-model object as produced by MockData.generate().
+  // Idempotent: if an issue with this Title already exists it is skipped.
+  async function importIssue(issue) {
+    if (!issue || !issue.issueId) {
+      return { ok: false, errors: { general: "importIssue needs a full issue object with an issueId." } };
+    }
+    const existing = await getIssueById(issue.issueId);
+    if (existing) return { ok: true, skipped: true, issue: existing };
+
+    const entityType = await getEntityType(ISSUES_LIST);
+    const payload = {
+      __metadata: { type: entityType },
+      Title: issue.issueId,
+      Mall: issue.mall,
+      IssueDescription: issue.issue,
+      OutletNo: issue.outletNo || null,
+      Tenant: issue.tenant,
+      DateRaised: issue.dateRaised || null,
+      AssignedTo: issue.assignedTo || null,
+      Status: issue.status || "New",
+      WaitingReason: issue.waitingReason || null,
+      Priority: issue.priority || "Medium",
+      Remarks: issue.remarks || "",
+      IsReopened: !!issue.isReopened,
+      ResolvedAt: issue.resolvedAt || null,
+      ResolvedBy: issue.resolvedBy || null,
+      CreatedByUser: issue.createdBy || null,
+      CreatedAtCustom: issue.createdAt || null,
+      UpdatedAt: issue.updatedAt || issue.createdAt || null,
+    };
+
+    try {
+      await spRequest("web/lists/getbytitle('" + ISSUES_LIST + "')/items", { method: "POST", body: payload });
+    } catch (e) {
+      return { ok: false, errors: { general: "Could not import " + issue.issueId + ": " + e.message } };
+    }
+    const created = await getIssueById(issue.issueId);
+    return { ok: true, skipped: false, issue: created };
+  }
+
   window.App.SPStorage = {
     getIssues,
     getIssueById,
     createIssue,
+    importIssue,
     updateIssue,
     resolveIssue,
     reopenIssue,

@@ -23,6 +23,7 @@ phase1-test.html                 Phase 1 test — Entra sign-in + one authentica
 phase2-test.html                 Phase 2 test — Issues list read / edit / resolve / re-open
 phase3-test.html                 Phase 3 test — Counters + collision-proof Issue ID generation + create
 schema-check.html                Signed-in dump of every column (internal name + type) in all 3 lists
+migrate.html                     Phase 7 — one-time load of the 19 seed issues + history + counters
 
 js/config.js                     STORAGE_MODE switch + shared constants
 js/utils.js  js/dal/validation.js  js/state/appState.js   Shared, mode-independent
@@ -57,8 +58,8 @@ js/dal/issuesApiLocal.js         The DAL, localStorage edition (the original V1 
 | 4 | ActivityLog audit trail | ✅ built into the SharePoint DAL — awaiting live test + column-map confirmation |
 | 5 | Dashboard KPIs + Recent Activity from real data | ✅ runs on real data via the SharePoint DAL — awaiting live test |
 | 6 | Export to CSV (opens in Excel) | ✅ built — "Export CSV" on Active Issues + Resolved/Archive, respects current filters |
-| 7 | One-time migration of the 19 demo issues | not started |
-| 8 | Final polish — friendly errors, edge cases, full test pass | not started |
+| 7 | One-time migration of the 19 demo issues | ✅ built — `migrate.html` (idempotent, dry-run preflight, typed confirm); awaiting live run |
+| 8 | Final polish — friendly errors, edge cases, full test pass | in progress |
 | — | Light + dark premium glass theme upgrade | not started (spec captured) |
 
 The official Dolmen logo goes in `assets/` (see `assets/README.md`). Until it's

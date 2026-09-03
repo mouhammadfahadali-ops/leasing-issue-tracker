@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Phase 7 — Demo Data Migration</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; padding: 32px 24px;
+    background: #f4f4f7; max-width: 940px; margin: 0 auto; color: #1d1d1f; }
+  h2 { margin: 0 0 4px; } h3 { margin: 22px 0 8px; font-size: 15px; }
+  .sub { color: #6e6e73; margin-bottom: 18px; font-size: 14px; }
+  .card { padding: 14px 16px; border-radius: 12px; margin-bottom: 14px; font-size: 13.5px; line-height: 1.5; }
+  .pending { background: #eef1f6; border: 1px solid #d8d8dc; }
+  .pass { background: #d4f7dc; border: 1px solid #34c759; }
+  .fail { background: #fde2e1; border: 1px solid #ff3b30; }
+  .warn { background: #fff4d6; border: 1px solid #ffcc55; }
+  button { background: #0a84ff; color: #fff; border: none; padding: 9px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; margin: 2px 6px 2px 0; }
+  button.secondary { background: #e5e5ea; color: #1d1d1f; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  input[type=text] { padding: 7px 9px; border: 1px solid #ccc; border-radius: 7px; font-size: 13px; }
+  .log { background: #fff; border: 1px solid #e5e5ea; border-radius: 10px; padding: 10px 12px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; max-height: 380px;
+    overflow: auto; white-space: pre-wrap; }
+  .k { color: #6e6e73; }
+  .ok { color: #1f8b3b; } .skip { color: #a15c00; } .err { color: #c8281c; }
+</style>
+</head>
+<body>
+
+<h2>Phase 7 — Demo Data Migration</h2>
+<div class="sub">One-time load of the 19 seed issues (with original IDs, dates and status), their activity history, and the ID counters into the live SharePoint lists. Safe to re-run — anything already present is skipped.</div>
+
+<div class="card warn">
+  <strong>Before running:</strong> the <code>CreatedByUser</code> and <code>ResolvedBy</code> choice columns in the Issues list must already hold the values <code>Fahad, Ali, Ahmed, Sara</code>. If they still have the old wrong choices, issue import will fail on those fields — fix the columns first, then re-run (already-imported rows are skipped).
+</div>
+
+<div id="signinCard" class="card pending">
+  <div id="signinResult"><button id="loginBtn">Sign in with Microsoft</button></div>
+</div>
+
+<div id="app" style="display:none;">
+  <h3>Preflight</h3>
+  <div id="preflight" class="card pending">Reading current SharePoint state…</div>
+  <button id="refreshBtn" class="secondary">Re-check</button>
+
+  <h3>Run</h3>
+  <div class="card pending">
+    Type <code>MIGRATE</code> to enable, then run. This writes to the real lists.
+    <div style="margin-top:8px;">
+      <input type="text" id="confirmInput" placeholder="type MIGRATE" autocomplete="off" />
+      <button id="runBtn" disabled>Run migration</button>
+    </div>
+  </div>
+
+  <h3>Progress</h3>
+  <div id="log" class="log">(nothing yet)</div>
+</div>
+
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth/authService.js"></script>
+<script src="js/storage/sharePointAdapter.js"></script>
+<script src="js/storage/counterService.js"></script>
+<script src="js/storage/activityLogAdapter.js"></script>
+<script src="js/storage/mockData.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const logEl = $("log");
+  let plan = null;
+
+  function log(line, cls) {
+    const now = logEl.textContent === "(nothing yet)";
+    if (now) logEl.textContent = "";
+    logEl.innerHTML += (cls ? '<span class="' + cls + '">' : "<span>") + line + "</span>\n";
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  const SEED_ACT_PREFIX = "seed-"; // migrated activity Title = seed-<entryId>
+
+  async function preflight() {
+    $("preflight").className = "card pending";
+    $("preflight").textContent = "Reading current SharePoint state…";
+    try {
+      const seed = window.App.MockData.generate();
+
+      const existingIssues = await window.App.SPStorage.getIssues();
+      const existingIds = new Set(existingIssues.map((i) => i.issueId));
+
+      let existingActTitles = new Set();
+      let activityReadable = true;
+      try {
+        const acts = await window.App.ActivityLog.getAll();
+        existingActTitles = new Set(acts.map((a) => a.entryId).filter(Boolean));
+      } catch (e) {
+        activityReadable = false;
+        log("ActivityLog not readable yet: " + e.message + " — activity step will be skipped.", "skip");
+      }
+
+      const issuesToImport = seed.issues.filter((i) => !existingIds.has(i.issueId));
+      const actToImport = seed.activityLog.filter((a) => !existingActTitles.has(SEED_ACT_PREFIX + a.entryId));
+
+      plan = { seed, issuesToImport, actToImport, activityReadable, existingIds };
+
+      const counterLines = Object.keys(seed.counters).sort()
+        .map((k) => "&nbsp;&nbsp;" + k.replace("_", " ") + " → " + seed.counters[k]).join("<br>");
+
+      $("preflight").className = "card pass";
+      $("preflight").innerHTML =
+        "<strong>Issues:</strong> " + seed.issues.length + " in seed · " +
+          existingIds.size + " already in SharePoint · <strong>" + issuesToImport.length + " to import</strong><br>" +
+        "<strong>Activity entries:</strong> " + seed.activityLog.length + " in seed · <strong>" +
+          (activityReadable ? actToImport.length + " to import" : "step skipped (list not readable)") + "</strong><br>" +
+        "<strong>Counters to set (at least):</strong><br>" + counterLines;
+    } catch (e) {
+      $("preflight").className = "card fail";
+      $("preflight").textContent = "❌ " + e.message;
+      console.error(e);
+    }
+  }
+
+  async function runMigration() {
+    if (!plan) { log("Run preflight first.", "err"); return; }
+    $("runBtn").disabled = true;
+    $("confirmInput").disabled = true;
+    logEl.textContent = "";
+
+    let created = 0, skipped = 0, failed = 0;
+
+    log("── Issues ──", "k");
+    for (const issue of plan.seed.issues) {
+      try {
+        const res = await window.App.SPStorage.importIssue(issue);
+        if (!res.ok) { failed++; log("x FAIL  " + issue.issueId + "  " + JSON.stringify(res.errors), "err"); continue; }
+        if (res.skipped) { skipped++; log("• skip  " + issue.issueId + " (already present)", "skip"); }
+        else { created++; log("✓ import " + issue.issueId + "  " + issue.tenant, "ok"); }
+      } catch (e) {
+        failed++; log("✗ FAIL  " + issue.issueId + "  " + e.message, "err");
+      }
+    }
+    log("Issues: " + created + " imported, " + skipped + " skipped, " + failed + " failed.\n", "k");
+
+    if (plan.activityReadable) {
+      let aCreated = 0, aSkip = 0, aFail = 0;
+      log("── Activity history ──", "k");
+      let existingActTitles = new Set();
+      try {
+        const acts = await window.App.ActivityLog.getAll();
+        existingActTitles = new Set(acts.map((a) => a.entryId).filter(Boolean));
+      } catch (e) { /* proceed best-effort */ }
+
+      for (const a of plan.seed.activityLog) {
+        const title = SEED_ACT_PREFIX + a.entryId;
+        if (existingActTitles.has(title)) { aSkip++; continue; }
+        try {
+          await window.App.ActivityLog.append({
+            entryId: title, timestamp: a.timestamp, issueId: a.issueId, actor: a.actor,
+            action: a.action, field: a.field, from: a.from, to: a.to, comment: a.comment,
+            waitingReason: a.field === "waitingReason" ? a.to : null,
+          });
+          aCreated++;
+        } catch (e) {
+          aFail++; log("✗ activity " + title + "  " + e.message, "err");
+        }
+      }
+      log("Activity: " + aCreated + " imported, " + aSkip + " skipped, " + aFail + " failed.\n", "k");
+    } else {
+      log("── Activity history: skipped (ActivityLog not readable) ──\n", "skip");
+    }
+
+    log("── Counters ──", "k");
+    for (const key of Object.keys(plan.seed.counters).sort()) {
+      const [mall, year] = key.split("_");
+      try {
+        const result = await window.App.CounterService.ensureAtLeast(mall, Number(year), plan.seed.counters[key]);
+        log("✓ " + mall + " " + year + " LastSequence ≥ " + plan.seed.counters[key] + " (now " + result + ")", "ok");
+      } catch (e) {
+        log("✗ " + mall + " " + year + "  " + e.message, "err");
+      }
+    }
+
+    log("\nDone. Re-run preflight to confirm counts.", "k");
+    $("confirmInput").disabled = false;
+    $("confirmInput").value = "";
+  }
+
+  $("confirmInput").addEventListener("input", (e) => {
+    $("runBtn").disabled = e.target.value.trim() !== "MIGRATE";
+  });
+  $("runBtn").addEventListener("click", runMigration);
+  $("refreshBtn").addEventListener("click", preflight);
+
+  async function init() {
+    try {
+      const account = await window.App.AuthService.init();
+      if (account) {
+        const u = await window.App.AuthService.getCurrentUser();
+        $("signinCard").className = "card pass";
+        $("signinResult").textContent = "✅ " + u.displayName + " (" + u.username + ")";
+        $("app").style.display = "block";
+        preflight();
+      } else {
+        $("loginBtn").addEventListener("click", () => window.App.AuthService.login());
+      }
+    } catch (e) {
+      $("signinCard").className = "card fail";
+      $("signinResult").textContent = "❌ " + e.message;
+    }
+  }
+  init();
+</script>
+</body>
+</html>

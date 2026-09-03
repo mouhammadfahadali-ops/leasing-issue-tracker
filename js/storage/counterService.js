@@ -173,9 +173,44 @@
     return row ? Number(row.LastSequence) || 0 : 0;
   }
 
+  /**
+   * Migration helper: make sure the counter for mall+year is at least
+   * `minValue`, so IDs handed out afterwards never collide with imported
+   * historical issues. Never lowers an existing higher value. Creates the
+   * row if missing. Returns the resulting LastSequence.
+   */
+  async function ensureAtLeast(mall, year, minValue) {
+    const code = mallCode(mall);
+    const want = Number(minValue) || 0;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      let row = await findCounterRow(code, year);
+      if (!row) {
+        try {
+          row = await createCounterRow(code, year); // LastSequence = 0
+        } catch (e) {
+          if (attempt < MAX_ATTEMPTS) { await backoff(attempt); continue; }
+          throw e;
+        }
+      }
+      const current = Number(row.LastSequence) || 0;
+      if (current >= want) return current;
+
+      try {
+        await bumpCounterRow(row, want);
+        return want;
+      } catch (e) {
+        if (e.status === 412 && attempt < MAX_ATTEMPTS) { await backoff(attempt); continue; }
+        throw e;
+      }
+    }
+    throw new Error("Could not set the " + code + " " + year + " counter after " + MAX_ATTEMPTS + " attempts.");
+  }
+
   window.App.CounterService = {
     getNextIssueId,
     peekLastSequence,
+    ensureAtLeast,
     mallCode,
     formatIssueId,
     MALL_CODES,
