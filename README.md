@@ -71,9 +71,9 @@ js/dal/issuesApiLocal.js         The DAL, localStorage edition (the original V1 
 | 8 | Final polish — friendly errors, edge cases, full test pass | error handling done; full test pass needs the live run |
 | — | Light + dark premium glass theme upgrade | ✅ built — token system + header toggle (localStorage, no-FOUC); full per-screen visual sweep still worth doing live |
 
-The official Dolmen logo goes in `assets/` (see `assets/README.md`). Until it's
-added the header shows an "LM" placeholder and the browser console logs a
-harmless 404 for the missing image.
+The header shows the "Leasing Matters" wordmark only — no logo image (removed
+by request 2026-09-03). To add one later, put an `<img>` back in the
+`.topbar__brand` in `index.html` and in `renderPanel()` in `js/auth/authGate.js`.
 
 ## How Issue IDs work (Phase 3)
 

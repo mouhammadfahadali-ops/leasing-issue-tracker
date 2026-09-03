@@ -19,22 +19,6 @@
 <link rel="stylesheet" href="css/base.css" />
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
-
-<style>
-  /* Logo slot. Loads assets/logo-dolmen.png if present, otherwise shows a
-     plain "LM" placeholder tile. See assets/README.md. */
-  .topbar__brand { display: flex; align-items: center; gap: var(--sp-3, 12px); }
-  .topbar__logo { display: flex; align-items: center; flex: 0 0 auto; height: 28px; }
-  .topbar__logo img { height: 28px; width: auto; display: block; }
-  .topbar__logo.is-placeholder {
-    width: 30px; height: 30px; border-radius: 8px;
-    align-items: center; justify-content: center;
-    background: var(--accent-tint, rgba(10, 132, 255, 0.12));
-    color: var(--accent, #0a84ff);
-    font-weight: 700; font-size: 12px; letter-spacing: 0.02em;
-  }
-  .topbar__logo.is-placeholder::after { content: attr(data-fallback); }
-</style>
 </head>
 <body>
 
@@ -42,10 +26,6 @@
 
   <header class="topbar">
     <div class="topbar__brand">
-      <div class="topbar__logo" id="logoSlot" data-fallback="LM" title="Dolmen Real Estate Management">
-        <img src="assets/logo-dolmen.png" alt="Dolmen Real Estate Management"
-             onerror="var s=this.parentNode;s.classList.add('is-placeholder');this.remove();" />
-      </div>
       <span class="topbar__title">Leasing Matters</span>
     </div>
 
