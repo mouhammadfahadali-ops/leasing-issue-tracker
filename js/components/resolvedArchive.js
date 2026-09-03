@@ -53,6 +53,7 @@
               '<input type="checkbox" id="archiveReopenedOnly" ' + (filters.reopenedOnly ? "checked" : "") + ' style="margin:0;" /> Previously re-opened' +
             "</label>" +
             '<button type="button" class="filter-clear" id="archiveClearFilters">Clear</button>' +
+            '<span id="archiveExportSlot" style="margin-left:auto;"></span>' +
           "</div>" +
         "</div>" +
         '<div class="toolbar mt-2">' +
@@ -93,6 +94,21 @@
       filters = { priority: "", assignedTo: "", searchText: "", reopenedOnly: false, resolvedFrom: "", resolvedTo: "" };
       render(container);
     });
+
+    const exportSlot = document.getElementById("archiveExportSlot");
+    if (exportSlot && window.App.Components.Export) {
+      exportSlot.appendChild(
+        window.App.Components.Export.button(async () => {
+          const mall = window.App.State.getState().mall;
+          let issues = await DAL().getIssues(Object.assign({ mall, onlyResolved: true }, {
+            priority: filters.priority, assignedTo: filters.assignedTo, searchText: filters.searchText,
+            resolvedFrom: filters.resolvedFrom, resolvedTo: filters.resolvedTo,
+          }));
+          if (filters.reopenedOnly) issues = issues.filter((i) => i.isReopened);
+          return issues;
+        }, "resolved-issues")
+      );
+    }
 
     await renderResults();
   }

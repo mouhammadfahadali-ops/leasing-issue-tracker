@@ -26,10 +26,13 @@
       box-shadow:var(--shadow-lg, 0 20px 60px rgba(15,23,42,.14));
       -webkit-backdrop-filter:var(--glass-blur, blur(22px) saturate(180%));
       backdrop-filter:var(--glass-blur, blur(22px) saturate(180%));}
-    #authRoot .auth-logo{width:44px;height:44px;margin:0 auto var(--sp-5);
-      border-radius:12px;display:flex;align-items:center;justify-content:center;
+    #authRoot .auth-logo{height:32px;margin:0 auto var(--sp-5);display:flex;
+      align-items:center;justify-content:center;}
+    #authRoot .auth-logo img{height:32px;width:auto;display:block;}
+    #authRoot .auth-logo.is-placeholder{width:44px;height:44px;border-radius:12px;
       background:var(--accent-tint, rgba(10,132,255,.12));color:var(--accent,#0a84ff);
       font-weight:700;font-size:18px;}
+    #authRoot .auth-logo.is-placeholder::after{content:"LM";}
     #authRoot h1{font-size:20px;margin:0 0 var(--sp-2);color:var(--text-primary,#1d1d1f);
       font-weight:600;letter-spacing:-.01em;}
     #authRoot p{font-size:13px;line-height:1.5;color:var(--text-secondary,#6e6e73);
@@ -63,7 +66,9 @@
     }
     root.innerHTML =
       '<div class="auth-card" role="dialog" aria-label="Sign in to Leasing Matters">' +
-        '<div class="auth-logo" aria-hidden="true">LM</div>' +
+        '<div class="auth-logo" aria-hidden="true">' +
+          '<img src="assets/logo-dolmen.png" alt="" ' +
+          "onerror=\"var s=this.parentNode;s.classList.add('is-placeholder');this.remove();\" /></div>" +
         "<h1>Leasing Matters</h1>" +
         "<p>Sign in with your Dolmen Microsoft 365 account to continue.</p>" +
         '<button type="button" id="authGateSignInBtn">Sign in with Microsoft</button>' +

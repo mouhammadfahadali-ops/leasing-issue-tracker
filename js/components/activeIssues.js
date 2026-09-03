@@ -47,6 +47,7 @@
             select("activeFilterPriority", "Priority", U().PRIORITIES, filters.priority) +
             select("activeFilterAssignedTo", "Assigned To", users, filters.assignedTo) +
             '<button type="button" class="filter-clear" id="activeClearFilters">Clear</button>' +
+            '<span id="activeExportSlot" style="margin-left:auto;"></span>' +
           "</div>" +
         "</div>" +
         '<div id="activeResultsArea" class="mt-3" aria-live="polite"></div>' +
@@ -75,6 +76,16 @@
       filters = { status: "", waitingReason: "", priority: "", assignedTo: "", searchText: "" };
       render(container);
     });
+
+    const exportSlot = document.getElementById("activeExportSlot");
+    if (exportSlot && window.App.Components.Export) {
+      exportSlot.appendChild(
+        window.App.Components.Export.button(() => {
+          const mall = window.App.State.getState().mall;
+          return DAL().getIssues(Object.assign({ mall, excludeResolved: true }, filters));
+        }, "active-issues")
+      );
+    }
 
     await renderResults();
   }

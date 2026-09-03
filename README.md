@@ -56,10 +56,14 @@ js/dal/issuesApiLocal.js         The DAL, localStorage edition (the original V1 
 | — | **V1 glassmorphism UI wired to SharePoint** (real DAL, auth gate, real user) | ✅ built — awaiting live test |
 | 4 | ActivityLog audit trail | ✅ built into the SharePoint DAL — awaiting live test + column-map confirmation |
 | 5 | Dashboard KPIs + Recent Activity from real data | ✅ runs on real data via the SharePoint DAL — awaiting live test |
-| 6 | Export to Excel/CSV | not started |
+| 6 | Export to CSV (opens in Excel) | ✅ built — "Export CSV" on Active Issues + Resolved/Archive, respects current filters |
 | 7 | One-time migration of the 19 demo issues | not started |
 | 8 | Final polish — friendly errors, edge cases, full test pass | not started |
 | — | Light + dark premium glass theme upgrade | not started (spec captured) |
+
+The official Dolmen logo goes in `assets/` (see `assets/README.md`). Until it's
+added the header shows an "LM" placeholder and the browser console logs a
+harmless 404 for the missing image.
 
 ## How Issue IDs work (Phase 3)
 
