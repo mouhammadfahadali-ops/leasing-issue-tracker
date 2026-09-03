@@ -54,6 +54,14 @@
     msalInstance.loginRedirect({ scopes: [SHAREPOINT_SCOPE] });
   }
 
+  function logout() {
+    if (!msalInstance) {
+      window.location.reload();
+      return;
+    }
+    msalInstance.logoutRedirect({ account: currentAccount || undefined });
+  }
+
   function getAccount() {
     return currentAccount;
   }
@@ -87,6 +95,7 @@
   window.App.AuthService = {
     init,
     login,
+    logout,
     getAccount,
     getAccessToken,
     getCurrentUser,

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SharePoint Schema Check</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Arial, sans-serif; padding: 32px 24px;
+    background: #f4f4f7; max-width: 1000px; margin: 0 auto; color: #1d1d1f; }
+  h2 { margin: 0 0 4px; } h3 { margin: 24px 0 8px; }
+  .sub { color: #6e6e73; margin-bottom: 20px; font-size: 14px; }
+  .card { padding: 14px 16px; border-radius: 12px; margin-bottom: 14px; font-size: 14px; }
+  .pending { background: #eef1f6; border: 1px solid #d8d8dc; }
+  .pass { background: #d4f7dc; border: 1px solid #34c759; }
+  .fail { background: #fde2e1; border: 1px solid #ff3b30; }
+  button { background: #0a84ff; color: #fff; border: none; padding: 9px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+  th, td { text-align: left; padding: 7px 10px; font-size: 12.5px; border-bottom: 1px solid #eee; }
+  th { background: #f0f0f3; text-transform: uppercase; font-size: 10.5px; letter-spacing: .03em; color: #6e6e73; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+</style>
+</head>
+<body>
+
+<h2>SharePoint Schema Check</h2>
+<div class="sub">Lists every non-hidden column (internal name + type) of the Issues, ActivityLog and Counters lists — so the adapter field maps can be locked to the real schema.</div>
+
+<div id="signinCard" class="card pending">
+  <div id="signinResult"><button id="loginBtn">Sign in with Microsoft</button></div>
+</div>
+
+<div id="out"></div>
+
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/auth/authService.js"></script>
+<script src="js/storage/sharePointAdapter.js"></script>
+<script>
+  const out = document.getElementById("out");
+  const signinCard = document.getElementById("signinCard");
+  const signinResult = document.getElementById("signinResult");
+
+  const TYPE_NAMES = {
+    1: "Integer", 2: "Text", 3: "Note(multi-line)", 4: "DateTime", 5: "Counter",
+    6: "Choice", 7: "Lookup", 8: "Boolean", 9: "Number", 10: "Currency",
+    11: "URL", 15: "MultiChoice", 20: "User"
+  };
+
+  async function dumpList(title) {
+    const data = await window.App.SP.request(
+      "web/lists/getbytitle('" + title + "')/fields?$filter=Hidden eq false and ReadOnlyField eq false"
+    );
+    const fields = (data.d.results || [])
+      .filter((f) => !["ContentType", "Attachments", "Edit", "LinkTitleNoMenu", "LinkTitle", "DocIcon", "ItemChildCount", "FolderChildCount", "_ComplianceFlags", "_ComplianceTag", "_ComplianceTagWrittenTime", "_ComplianceTagUserId", "AppAuthor", "AppEditor"].includes(f.InternalName));
+
+    let html = "<h3>" + title + " <span class='mono' style='font-size:12px;color:#6e6e73'>(" + fields.length + " columns)</span></h3>";
+    html += "<table><thead><tr><th>Display name</th><th>Internal name</th><th>Type</th><th>Choices</th></tr></thead><tbody>";
+    for (const f of fields) {
+      let choices = "";
+      if (f.FieldTypeKind === 6 || f.FieldTypeKind === 15) {
+        try {
+          const cd = await window.App.SP.request(
+            "web/lists/getbytitle('" + title + "')/fields/getbytitle('" + f.Title + "')?$select=Choices"
+          );
+          choices = (cd.d.Choices && cd.d.Choices.results ? cd.d.Choices.results : []).join(", ");
+        } catch (e) { choices = "(couldn't read)"; }
+      }
+      html += "<tr><td>" + f.Title + "</td><td><code>" + f.InternalName + "</code></td><td>" +
+        (TYPE_NAMES[f.FieldTypeKind] || f.TypeAsString || f.FieldTypeKind) + "</td><td class='mono' style='font-size:11.5px'>" + choices + "</td></tr>";
+    }
+    html += "</tbody></table>";
+    return html;
+  }
+
+  async function run() {
+    out.innerHTML = "<div class='card pending'>Reading schema…</div>";
+    try {
+      let html = "";
+      for (const list of ["Issues", "ActivityLog", "Counters"]) {
+        try { html += await dumpList(list); }
+        catch (e) { html += "<h3>" + list + "</h3><div class='card fail'>❌ " + e.message + "</div>"; }
+      }
+      out.innerHTML = html;
+    } catch (e) {
+      out.innerHTML = "<div class='card fail'>❌ " + e.message + "</div>";
+      console.error(e);
+    }
+  }
+
+  async function init() {
+    try {
+      const account = await window.App.AuthService.init();
+      if (account) {
+        const u = await window.App.AuthService.getCurrentUser();
+        signinCard.className = "card pass";
+        signinResult.textContent = "✅ " + u.displayName + " (" + u.username + ")";
+        run();
+      } else {
+        document.getElementById("loginBtn").addEventListener("click", () => window.App.AuthService.login());
+      }
+    } catch (e) {
+      signinCard.className = "card fail";
+      signinResult.textContent = "❌ " + e.message;
+    }
+  }
+  init();
+</script>
+</body>
+</html>
