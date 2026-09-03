@@ -43,6 +43,9 @@
       counters: "Counters",
     },
 
-    TEAM_MEMBERS: ["Fahad", "Ali", "Ahmed", "Sara"],
+    // Options shown in every "Assigned To" control (New Issue form, Issue
+    // Detail quick-actions, and the list filters). Must match the choices on
+    // the SharePoint Issues > AssignedTo column.
+    TEAM_MEMBERS: ["Leasing", "CEO", "Finance", "FitOut"],
   };
 })();

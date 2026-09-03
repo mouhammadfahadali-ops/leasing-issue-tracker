@@ -327,7 +327,7 @@
   // ---------------------------------------------------------------------
 
   async function getUsers() {
-    return (window.App.Config.TEAM_MEMBERS || ["Fahad", "Ali", "Ahmed", "Sara"]).slice();
+    return (window.App.Config.TEAM_MEMBERS || ["Leasing", "CEO", "Finance", "FitOut"]).slice();
   }
 
   async function getCurrentUser() {

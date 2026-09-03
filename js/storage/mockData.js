@@ -275,7 +275,7 @@
   }
 
   window.App.MockData = {
-    CURRENT_USERS: ["Fahad", "Ali", "Ahmed", "Sara"],
+    CURRENT_USERS: ["Leasing", "CEO", "Finance", "FitOut"],
     generate,
   };
 })();
