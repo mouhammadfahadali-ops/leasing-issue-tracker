@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Leasing Matters</title>
 
+<!-- Apply the saved theme before the stylesheets paint — avoids a flash. -->
+<script>
+  (function () {
+    try {
+      var t = localStorage.getItem("leasingMatters_theme");
+      if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+    } catch (e) { /* private mode / storage blocked — fall back to OS theme */ }
+  })();
+</script>
+
 <link rel="stylesheet" href="css/variables.css" />
 <link rel="stylesheet" href="css/base.css" />
 <link rel="stylesheet" href="css/layout.css" />
@@ -44,6 +54,7 @@
     <div class="topbar__spacer"></div>
 
     <div class="topbar__right">
+      <div id="themeToggleSlot"></div>
       <div id="userSelectorSlot"></div>
       <button type="button" class="btn btn--primary" id="newIssueBtn">+ New Issue</button>
     </div>
@@ -102,6 +113,7 @@
 
 <!-- ===== Components ===== -->
 <script src="js/components/toast.js"></script>
+<script src="js/components/themeToggle.js"></script>
 <script src="js/components/exportData.js"></script>
 <script src="js/components/mallSelector.js"></script>
 <script src="js/components/userSelector.js"></script>

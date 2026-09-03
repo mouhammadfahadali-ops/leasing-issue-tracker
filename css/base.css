@@ -10,15 +10,52 @@ html, body {
   height: 100%;
 }
 
+html {
+  color-scheme: light dark;
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);
   color: var(--text-primary);
-  background: var(--bg-gradient);
+  background-color: var(--bg-solid);
+  background-image: var(--bg-gradient);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   font-size: 14px;
   line-height: 1.5;
+}
+
+/* Smooth, restrained cross-fade of theme-dependent surfaces — but ONLY for
+   the ~300ms right after the user flips the toggle (themeToggle.js adds
+   .theme-switching to <html> transiently). A permanent transition on
+   var()-derived colours is avoided on purpose: it can leave elements stuck
+   at the previous theme's value in some browsers. */
+html.theme-switching,
+html.theme-switching .topbar,
+html.theme-switching .sidebar,
+html.theme-switching .glass-panel,
+html.theme-switching .modal,
+html.theme-switching .slideover,
+html.theme-switching .kpi-card,
+html.theme-switching .mall-mini-card,
+html.theme-switching .pipeline__stage,
+html.theme-switching .remarks-box,
+html.theme-switching .prior-resolution-box,
+html.theme-switching .segmented,
+html.theme-switching .search-field,
+html.theme-switching .filter-select,
+html.theme-switching .user-select-wrap,
+html.theme-switching .pill,
+html.theme-switching .nav-item,
+html.theme-switching .btn,
+html.theme-switching .form-control,
+html.theme-switching .data-table td,
+html.theme-switching body {
+  transition: background-color var(--duration-med) var(--ease-out),
+              border-color var(--duration-med) var(--ease-out),
+              color var(--duration-med) var(--ease-out),
+              box-shadow var(--duration-med) var(--ease-out) !important;
 }
 
 h1, h2, h3, h4, p {
@@ -49,11 +86,11 @@ a {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.16);
+  background: var(--scrollbar-thumb);
   border-radius: var(--radius-pill);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.26);
+  background: var(--scrollbar-thumb-hover);
 }
 ::-webkit-scrollbar-track {
   background: transparent;

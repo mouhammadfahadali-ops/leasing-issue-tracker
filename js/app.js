@@ -26,6 +26,7 @@
   });
 
   async function renderShell() {
+    if (window.App.Components.ThemeToggle) window.App.Components.ThemeToggle.render();
     window.App.Components.MallSelector.render(); // sync — reads only local UI state
     await window.App.Components.UserSelector.render();
     await window.App.Components.Sidebar.render();

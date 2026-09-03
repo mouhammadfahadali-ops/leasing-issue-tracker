@@ -1,98 +1,355 @@
 /* ==========================================================================
-   Design Tokens — Leasing Issue Tracker
-   Apple/iOS-inspired glassmorphism system
+   Design Tokens — Leasing Matters
+   Apple / iPhone-Pro-inspired glass system, with a full Light + Dark theme.
+
+   HOW THEMING WORKS
+     :root                         → Light theme values (the default)
+     :root[data-theme="dark"]      → Dark theme, chosen explicitly (toggle)
+     @media (prefers-color-scheme: dark) :root:not([data-theme])
+                                   → Dark theme, following the OS, when the
+                                     user hasn't made an explicit choice
+     :root[data-theme="light"]     → Light, chosen explicitly (already the
+                                     :root default, so nothing to override)
+
+   Every component reads these semantic variables — no component hard-codes
+   a colour. To restyle the whole app, edit this file only.
    ========================================================================== */
 
 :root {
-  /* -- Base surface -- */
-  --bg-gradient: linear-gradient(160deg, #eef1f6 0%, #e6eaf2 45%, #e9edf4 100%);
+  /* ---------- Surfaces ---------- */
+  --bg-primary: #eef1f6;
+  --bg-secondary: #e6eaf2;
+  --bg-gradient: linear-gradient(165deg, #f1f3f8 0%, #e8ecf3 52%, #edeff5 100%);
   --bg-solid: #eef1f6;
 
-  /* -- Glass panels -- */
-  --glass-fill: rgba(255, 255, 255, 0.62);
-  --glass-fill-strong: rgba(255, 255, 255, 0.78);
-  --glass-fill-soft: rgba(255, 255, 255, 0.46);
+  /* ---------- Glass hierarchy ---------- */
+  /* L1 surfaces (sidebar, header, panels, KPI cards) */
+  --glass-bg: rgba(255, 255, 255, 0.62);
+  /* L2 elevated (modals, slide-over, dropdowns) */
+  --glass-bg-elevated: rgba(255, 255, 255, 0.80);
+  /* nested / inset panels */
+  --glass-bg-soft: rgba(255, 255, 255, 0.46);
+
   --glass-border: rgba(255, 255, 255, 0.55);
   --glass-border-soft: rgba(15, 23, 42, 0.06);
+  --hairline: rgba(15, 23, 42, 0.05);
+
   --glass-blur: blur(22px) saturate(180%);
   --glass-blur-light: blur(14px) saturate(160%);
 
-  /* -- Text -- */
+  /* Back-compat aliases (older rules still reference these names) */
+  --glass-fill: var(--glass-bg);
+  --glass-fill-strong: var(--glass-bg-elevated);
+  --glass-fill-soft: var(--glass-bg-soft);
+
+  /* ---------- Text ---------- */
   --text-primary: #1d1d1f;
   --text-secondary: #6e6e73;
   --text-tertiary: #9a9aa0;
+  --text-muted: var(--text-tertiary);
   --text-on-accent: #ffffff;
 
-  /* -- Accent -- */
+  /* ---------- Accent ---------- */
   --accent: #0a84ff;
   --accent-strong: #0066cc;
+  --accent-hover: var(--accent-strong);
   --accent-tint: rgba(10, 132, 255, 0.12);
   --accent-tint-strong: rgba(10, 132, 255, 0.18);
+  --accent-row-hover: rgba(10, 132, 255, 0.045);
 
-  /* -- Status colors (soft translucent) -- */
+  /* ---------- Neutral fills (hovers, tracks, chips) ---------- */
+  --fill-hover: rgba(15, 23, 42, 0.05);
+  --fill-subtle: rgba(15, 23, 42, 0.045);
+  --fill-track: rgba(15, 23, 42, 0.07);
+  --segmented-track: rgba(118, 118, 128, 0.12);
+  --segmented-active-bg: #ffffff;
+
+  /* ---------- Inputs ---------- */
+  --input-bg: rgba(255, 255, 255, 0.60);
+  --input-bg-strong: rgba(255, 255, 255, 0.55);
+  --input-border: rgba(15, 23, 42, 0.06);
+  /* select chevron — grey mid-tone, reads on both themes */
+  --select-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" stroke="%238a8a90" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+
+  /* ---------- Overlays / scrims ---------- */
+  --overlay-scrim: rgba(15, 23, 42, 0.28);
+  --overlay-scrim-light: rgba(15, 23, 42, 0.24);
+
+  /* ---------- Toast ---------- */
+  --toast-bg: rgba(29, 29, 31, 0.92);
+  --toast-fg: #ffffff;
+
+  /* ---------- Dashed "prototype" affordances ---------- */
+  --dashed-border: rgba(110, 110, 115, 0.35);
+  --dashed-fill: rgba(142, 142, 147, 0.06);
+  --dashed-fill-strong: rgba(142, 142, 147, 0.08);
+
+  /* Ring behind timeline nodes — matches the panel behind them */
+  --node-ring: #ffffff;
+
+  /* ---------- Semantic ---------- */
+  --danger: #ff3b30;
+  --danger-strong: #c8281c;
+  --danger-tint: rgba(255, 59, 48, 0.10);
+  --danger-tint-strong: rgba(255, 59, 48, 0.16);
+  --danger-tint-soft: rgba(255, 59, 48, 0.045);
+  --success: #34c759;
+  --warning: #a15c00;
+  --info: var(--accent-strong);
+
+  /* ---------- Status colours (soft translucent) ---------- */
   --status-new-bg: rgba(142, 142, 147, 0.14);
   --status-new-fg: #48484a;
-
   --status-progress-bg: rgba(10, 132, 255, 0.13);
   --status-progress-fg: #0066cc;
-
   --status-waiting-bg: rgba(255, 159, 10, 0.16);
   --status-waiting-fg: #a15c00;
-
   --status-resolved-bg: rgba(52, 199, 89, 0.15);
   --status-resolved-fg: #1f8b3b;
 
-  /* -- Priority colors -- */
+  /* ---------- Priority colours ---------- */
   --priority-low-bg: rgba(142, 142, 147, 0.14);
   --priority-low-fg: #5b5b60;
-
   --priority-medium-bg: rgba(90, 200, 250, 0.16);
   --priority-medium-fg: #0b7fae;
-
   --priority-high-bg: rgba(255, 149, 0, 0.16);
   --priority-high-fg: #b26400;
-
   --priority-urgent-bg: rgba(255, 59, 48, 0.14);
   --priority-urgent-fg: #c8281c;
 
-  /* -- Semantic -- */
-  --danger: #ff3b30;
-  --success: #34c759;
+  /* ---------- Scrollbar ---------- */
+  --scrollbar-thumb: rgba(15, 23, 42, 0.16);
+  --scrollbar-thumb-hover: rgba(15, 23, 42, 0.26);
 
-  /* -- Radii -- */
+  /* ---------- Radii ---------- */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 26px;
   --radius-pill: 999px;
 
-  /* -- Shadows -- */
+  /* ---------- Shadows ---------- */
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
   --shadow-lg: 0 20px 60px rgba(15, 23, 42, 0.14);
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-soft: var(--shadow-md);
+  --shadow-elevated: var(--shadow-lg);
+  --shadow-accent: 0 4px 14px rgba(10, 132, 255, 0.32);
+  --shadow-pop: 0 2px 8px rgba(15, 23, 42, 0.12);
+  --danger-border: rgba(255, 59, 48, 0.35);
 
-  /* -- Spacing scale -- */
-  --sp-1: 4px;
-  --sp-2: 8px;
-  --sp-3: 12px;
-  --sp-4: 16px;
-  --sp-5: 20px;
-  --sp-6: 24px;
-  --sp-7: 32px;
-  --sp-8: 40px;
-  --sp-9: 56px;
+  /* ---------- Spacing scale ---------- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 20px;
+  --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 56px;
 
-  /* -- Typography -- */
+  /* ---------- Typography ---------- */
   --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+    "SF Pro Text", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
 
-  /* -- Layout -- */
+  /* ---------- Layout ---------- */
   --sidebar-width: 232px;
   --topbar-height: 64px;
 
-  /* -- Motion -- */
+  /* ---------- Motion ---------- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
-  --duration-med: 260ms;
+  --duration-med: 240ms;
+
+  color-scheme: light;
+}
+
+/* =========================================================================
+   DARK THEME
+   Defined once as a custom-property block, applied both to an explicit
+   [data-theme="dark"] and to OS-dark when the user hasn't chosen.
+   ========================================================================= */
+:root[data-theme="dark"] {
+  --bg-primary: #161719;
+  --bg-secondary: #1c1d21;
+  --bg-gradient: linear-gradient(165deg, #171820 0%, #1a1b1f 52%, #191a1d 100%);
+  --bg-solid: #161719;
+
+  --glass-bg: rgba(42, 44, 50, 0.55);
+  --glass-bg-elevated: rgba(48, 50, 57, 0.74);
+  --glass-bg-soft: rgba(255, 255, 255, 0.04);
+
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-soft: rgba(255, 255, 255, 0.08);
+  --hairline: rgba(255, 255, 255, 0.06);
+
+  --glass-blur: blur(24px) saturate(160%);
+  --glass-blur-light: blur(16px) saturate(150%);
+
+  --text-primary: #f2f2f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #77777e;
+  --text-on-accent: #ffffff;
+
+  --accent: #0a84ff;
+  --accent-strong: #409cff;
+  --accent-hover: #409cff;
+  --accent-tint: rgba(10, 132, 255, 0.22);
+  --accent-tint-strong: rgba(10, 132, 255, 0.30);
+  --accent-row-hover: rgba(10, 132, 255, 0.12);
+
+  --fill-hover: rgba(255, 255, 255, 0.06);
+  --fill-subtle: rgba(255, 255, 255, 0.05);
+  --fill-track: rgba(255, 255, 255, 0.08);
+  --segmented-track: rgba(255, 255, 255, 0.08);
+  --segmented-active-bg: rgba(255, 255, 255, 0.14);
+
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-bg-strong: rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.12);
+  --select-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" stroke="%23a1a1aa" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+
+  --overlay-scrim: rgba(0, 0, 0, 0.55);
+  --overlay-scrim-light: rgba(0, 0, 0, 0.45);
+
+  --toast-bg: rgba(238, 238, 242, 0.95);
+  --toast-fg: #1d1d1f;
+
+  --dashed-border: rgba(255, 255, 255, 0.18);
+  --dashed-fill: rgba(255, 255, 255, 0.04);
+  --dashed-fill-strong: rgba(255, 255, 255, 0.05);
+
+  --node-ring: #1c1d21;
+
+  --danger: #ff453a;
+  --danger-strong: #ff6b60;
+  --danger-tint: rgba(255, 69, 58, 0.16);
+  --danger-tint-strong: rgba(255, 69, 58, 0.24);
+  --danger-tint-soft: rgba(255, 69, 58, 0.08);
+  --success: #30d158;
+  --warning: #ffb454;
+  --info: #409cff;
+
+  --status-new-bg: rgba(142, 142, 147, 0.20);
+  --status-new-fg: #c7c7cc;
+  --status-progress-bg: rgba(10, 132, 255, 0.24);
+  --status-progress-fg: #6cb6ff;
+  --status-waiting-bg: rgba(255, 159, 10, 0.20);
+  --status-waiting-fg: #ffb454;
+  --status-resolved-bg: rgba(48, 209, 88, 0.20);
+  --status-resolved-fg: #5fd07f;
+
+  --priority-low-bg: rgba(142, 142, 147, 0.20);
+  --priority-low-fg: #b0b0b8;
+  --priority-medium-bg: rgba(90, 200, 250, 0.18);
+  --priority-medium-fg: #63c7f0;
+  --priority-high-bg: rgba(255, 149, 0, 0.20);
+  --priority-high-fg: #ffad4d;
+  --priority-urgent-bg: rgba(255, 69, 58, 0.22);
+  --priority-urgent-fg: #ff6b60;
+
+  --scrollbar-thumb: rgba(255, 255, 255, 0.16);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.42);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.52);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --shadow-accent: 0 4px 16px rgba(10, 132, 255, 0.40);
+  --shadow-pop: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --danger-border: rgba(255, 69, 58, 0.42);
+
+  color-scheme: dark;
+}
+
+/* OS-dark, only when the user hasn't explicitly picked a theme.
+   (Same values as above — kept in sync by hand.) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg-primary: #161719;
+    --bg-secondary: #1c1d21;
+    --bg-gradient: linear-gradient(165deg, #171820 0%, #1a1b1f 52%, #191a1d 100%);
+    --bg-solid: #161719;
+
+    --glass-bg: rgba(42, 44, 50, 0.55);
+    --glass-bg-elevated: rgba(48, 50, 57, 0.74);
+    --glass-bg-soft: rgba(255, 255, 255, 0.04);
+
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --glass-border-soft: rgba(255, 255, 255, 0.08);
+    --hairline: rgba(255, 255, 255, 0.06);
+
+    --glass-blur: blur(24px) saturate(160%);
+    --glass-blur-light: blur(16px) saturate(150%);
+
+    --text-primary: #f2f2f5;
+    --text-secondary: #a1a1aa;
+    --text-tertiary: #77777e;
+    --text-on-accent: #ffffff;
+
+    --accent: #0a84ff;
+    --accent-strong: #409cff;
+    --accent-hover: #409cff;
+    --accent-tint: rgba(10, 132, 255, 0.22);
+    --accent-tint-strong: rgba(10, 132, 255, 0.30);
+    --accent-row-hover: rgba(10, 132, 255, 0.12);
+
+    --fill-hover: rgba(255, 255, 255, 0.06);
+    --fill-subtle: rgba(255, 255, 255, 0.05);
+    --fill-track: rgba(255, 255, 255, 0.08);
+    --segmented-track: rgba(255, 255, 255, 0.08);
+    --segmented-active-bg: rgba(255, 255, 255, 0.14);
+
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --input-bg-strong: rgba(255, 255, 255, 0.06);
+    --input-border: rgba(255, 255, 255, 0.12);
+    --select-arrow: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" stroke="%23a1a1aa" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+
+    --overlay-scrim: rgba(0, 0, 0, 0.55);
+    --overlay-scrim-light: rgba(0, 0, 0, 0.45);
+
+    --toast-bg: rgba(238, 238, 242, 0.95);
+    --toast-fg: #1d1d1f;
+
+    --dashed-border: rgba(255, 255, 255, 0.18);
+    --dashed-fill: rgba(255, 255, 255, 0.04);
+    --dashed-fill-strong: rgba(255, 255, 255, 0.05);
+
+    --node-ring: #1c1d21;
+
+    --danger: #ff453a;
+    --danger-strong: #ff6b60;
+    --danger-tint: rgba(255, 69, 58, 0.16);
+    --danger-tint-strong: rgba(255, 69, 58, 0.24);
+    --danger-tint-soft: rgba(255, 69, 58, 0.08);
+    --success: #30d158;
+    --warning: #ffb454;
+    --info: #409cff;
+
+    --status-new-bg: rgba(142, 142, 147, 0.20);
+    --status-new-fg: #c7c7cc;
+    --status-progress-bg: rgba(10, 132, 255, 0.24);
+    --status-progress-fg: #6cb6ff;
+    --status-waiting-bg: rgba(255, 159, 10, 0.20);
+    --status-waiting-fg: #ffb454;
+    --status-resolved-bg: rgba(48, 209, 88, 0.20);
+    --status-resolved-fg: #5fd07f;
+
+    --priority-low-bg: rgba(142, 142, 147, 0.20);
+    --priority-low-fg: #b0b0b8;
+    --priority-medium-bg: rgba(90, 200, 250, 0.18);
+    --priority-medium-fg: #63c7f0;
+    --priority-high-bg: rgba(255, 149, 0, 0.20);
+    --priority-high-fg: #ffad4d;
+    --priority-urgent-bg: rgba(255, 69, 58, 0.22);
+    --priority-urgent-fg: #ff6b60;
+
+    --scrollbar-thumb: rgba(255, 255, 255, 0.16);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.40);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.42);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.52);
+    --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --shadow-accent: 0 4px 16px rgba(10, 132, 255, 0.40);
+    --shadow-pop: 0 2px 8px rgba(0, 0, 0, 0.45);
+    --danger-border: rgba(255, 69, 58, 0.42);
+
+    color-scheme: dark;
+  }
 }

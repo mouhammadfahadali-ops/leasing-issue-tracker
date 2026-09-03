@@ -37,19 +37,19 @@
 .btn--primary {
   background: var(--accent);
   color: var(--text-on-accent);
-  box-shadow: 0 4px 14px rgba(10, 132, 255, 0.32);
+  box-shadow: var(--shadow-accent);
 }
 .btn--primary:hover {
-  background: var(--accent-strong);
+  background: var(--accent-hover);
 }
 
 .btn--secondary {
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--input-bg-strong);
   color: var(--text-primary);
   border-color: var(--glass-border-soft);
 }
 .btn--secondary:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: var(--glass-bg-elevated);
 }
 
 .btn--ghost {
@@ -57,16 +57,16 @@
   color: var(--text-secondary);
 }
 .btn--ghost:hover {
-  background: rgba(15, 23, 42, 0.05);
+  background: var(--fill-hover);
   color: var(--text-primary);
 }
 
 .btn--danger {
-  background: rgba(255, 59, 48, 0.1);
+  background: var(--danger-tint);
   color: var(--danger);
 }
 .btn--danger:hover {
-  background: rgba(255, 59, 48, 0.16);
+  background: var(--danger-tint-strong);
 }
 
 .btn--sm {
@@ -99,7 +99,7 @@
   transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
 }
 .icon-btn:hover {
-  background: rgba(15, 23, 42, 0.06);
+  background: var(--fill-hover);
   color: var(--text-primary);
 }
 
@@ -107,7 +107,7 @@
 .segmented {
   display: inline-flex;
   padding: 3px;
-  background: rgba(118, 118, 128, 0.12);
+  background: var(--segmented-track);
   border-radius: var(--radius-pill);
   gap: 2px;
 }
@@ -125,9 +125,9 @@
 }
 
 .segmented__option[aria-pressed="true"] {
-  background: #ffffff;
+  background: var(--segmented-active-bg);
   color: var(--text-primary);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--shadow-pop);
 }
 
 .segmented__option:hover:not([aria-pressed="true"]) {
@@ -152,7 +152,7 @@
 }
 
 .nav-item:hover {
-  background: rgba(15, 23, 42, 0.045);
+  background: var(--fill-subtle);
   color: var(--text-primary);
 }
 
@@ -171,14 +171,14 @@
   font-size: 11px;
   font-weight: 650;
   color: var(--text-tertiary);
-  background: rgba(15, 23, 42, 0.06);
+  background: var(--fill-track);
   border-radius: var(--radius-pill);
   padding: 1px 7px;
 }
 
 .nav-item.is-active .nav-item__badge {
   color: var(--accent-strong);
-  background: rgba(10, 132, 255, 0.14);
+  background: var(--accent-tint);
 }
 
 /* ---- Pills: status & priority ---- */
@@ -213,7 +213,7 @@
 .pill--priority-urgent { background: var(--priority-urgent-bg); color: var(--priority-urgent-fg); }
 
 .pill--muted {
-  background: rgba(15, 23, 42, 0.05);
+  background: var(--fill-hover);
   color: var(--text-tertiary);
 }
 .pill--muted::before { display: none; }
@@ -332,7 +332,7 @@
 .mini-bar {
   height: 5px;
   border-radius: var(--radius-pill);
-  background: rgba(15, 23, 42, 0.07);
+  background: var(--fill-track);
   overflow: hidden;
   display: flex;
 }
@@ -406,7 +406,7 @@
   height: 36px;
   padding: 0 var(--sp-3);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--input-bg-strong);
   border: 1px solid var(--glass-border-soft);
   min-width: 220px;
   flex: 1;
@@ -434,9 +434,7 @@
   padding: 0 28px 0 var(--sp-3);
   border-radius: var(--radius-pill);
   border: 1px solid var(--glass-border-soft);
-  background: rgba(255, 255, 255, 0.55)
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" stroke="%236e6e73" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-    no-repeat right 10px center;
+  background: var(--input-bg-strong) var(--select-arrow) no-repeat right 10px center;
   appearance: none;
   -webkit-appearance: none;
   font-size: 12.5px;
@@ -480,7 +478,7 @@
 
 .data-table tbody td {
   padding: var(--sp-3);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.045);
+  border-bottom: 1px solid var(--hairline);
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -495,7 +493,7 @@
   transition: background var(--duration-fast) var(--ease-out);
 }
 .data-table tbody tr:hover {
-  background: rgba(10, 132, 255, 0.045);
+  background: var(--accent-row-hover);
 }
 .data-table tbody tr:last-child td {
   border-bottom: none;
@@ -541,7 +539,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.28);
+  background: var(--overlay-scrim);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
@@ -638,8 +636,8 @@
   height: 38px;
   padding: 0 var(--sp-3);
   border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border-soft);
-  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
   font-size: 13px;
   color: var(--text-primary);
   outline: none;
@@ -663,9 +661,7 @@ textarea.form-control {
 select.form-control {
   appearance: none;
   -webkit-appearance: none;
-  background: rgba(255, 255, 255, 0.6)
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" stroke="%236e6e73" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-    no-repeat right 12px center;
+  background: var(--input-bg) var(--select-arrow) no-repeat right 12px center;
   padding-right: 28px;
 }
 
@@ -692,7 +688,7 @@ select.form-control {
 .slideover-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.24);
+  background: var(--overlay-scrim-light);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 90;
@@ -821,8 +817,8 @@ select.form-control {
 .prior-resolution-box {
   padding: var(--sp-4);
   border-radius: var(--radius-md);
-  background: rgba(142, 142, 147, 0.08);
-  border: 1px dashed rgba(110, 110, 115, 0.35);
+  background: var(--dashed-fill-strong);
+  border: 1px dashed var(--dashed-border);
 }
 
 .prior-resolution-box__title {
@@ -867,7 +863,7 @@ select.form-control {
   height: 10px;
   border-radius: 50%;
   background: var(--accent);
-  border: 2px solid #fff;
+  border: 2px solid var(--node-ring);
   box-shadow: 0 0 0 2px var(--accent-tint);
 }
 
@@ -912,9 +908,9 @@ select.form-control {
   align-items: center;
   gap: 8px;
   padding: 5px 10px 5px 8px;
-  border: 1px dashed rgba(110, 110, 115, 0.35);
+  border: 1px dashed var(--dashed-border);
   border-radius: var(--radius-pill);
-  background: rgba(142, 142, 147, 0.06);
+  background: var(--dashed-fill);
 }
 
 .user-select-wrap__icon {
@@ -947,10 +943,8 @@ select.form-control {
   font-weight: 650;
   border-radius: 0;
   border: none;
-  border-bottom: 1px solid rgba(110, 110, 115, 0.3);
-  background: transparent
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" stroke="%236e6e73" stroke-width="1.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>')
-    no-repeat right 2px center;
+  border-bottom: 1px solid var(--dashed-border);
+  background: transparent var(--select-arrow) no-repeat right 2px center;
   appearance: none;
   -webkit-appearance: none;
   color: var(--text-primary);
@@ -963,8 +957,8 @@ select.form-control {
   bottom: var(--sp-6);
   left: 50%;
   transform: translateX(-50%) translateY(0);
-  background: rgba(29, 29, 31, 0.92);
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--toast-fg);
   font-size: 12.5px;
   font-weight: 540;
   padding: 10px 18px;
@@ -986,9 +980,9 @@ select.form-control {
   gap: 2px;
   padding: var(--sp-2) var(--sp-3) var(--sp-3);
   margin: 0 0 var(--sp-2);
-  border: 1px dashed rgba(255, 59, 48, 0.35);
+  border: 1px dashed var(--danger-border);
   border-radius: var(--radius-md);
-  background: rgba(255, 59, 48, 0.045);
+  background: var(--danger-tint-soft);
 }
 
 .dev-tools-label {
@@ -1008,7 +1002,7 @@ select.form-control {
 .data-table tbody tr:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
-  background: rgba(10, 132, 255, 0.06);
+  background: var(--accent-row-hover);
 }
 
 /* ---- Small helpers ---- */

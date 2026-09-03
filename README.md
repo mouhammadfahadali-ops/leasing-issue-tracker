@@ -15,6 +15,15 @@ Every UI component is identical in both modes — only the DAL + storage scripts
 
 Live: <https://mouhammadfahadali-ops.github.io/leasing-issue-tracker/>
 
+## Theming
+
+Light + dark, driven entirely by CSS variables in `css/variables.css`:
+`:root` = light, `:root[data-theme="dark"]` = dark, and OS-dark applies when the
+user hasn't chosen. The header toggle (`js/components/themeToggle.js`) sets
+`<html data-theme>` and remembers the choice in `localStorage`; a tiny inline
+script in `index.html <head>` applies it before first paint (no flash). No
+component hard-codes a colour — restyle the whole app from `variables.css` alone.
+
 ## Files
 
 ```
@@ -60,7 +69,7 @@ js/dal/issuesApiLocal.js         The DAL, localStorage edition (the original V1 
 | 6 | Export to CSV (opens in Excel) | ✅ built — "Export CSV" on Active Issues + Resolved/Archive, respects current filters |
 | 7 | One-time migration of the 19 demo issues | ✅ built — `migrate.html` (idempotent, dry-run preflight, typed confirm); awaiting live run |
 | 8 | Final polish — friendly errors, edge cases, full test pass | error handling done; full test pass needs the live run |
-| — | Light + dark premium glass theme upgrade | not started (spec captured) |
+| — | Light + dark premium glass theme upgrade | ✅ built — token system + header toggle (localStorage, no-FOUC); full per-screen visual sweep still worth doing live |
 
 The official Dolmen logo goes in `assets/` (see `assets/README.md`). Until it's
 added the header shows an "LM" placeholder and the browser console logs a
