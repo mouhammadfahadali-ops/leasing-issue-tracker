@@ -26,7 +26,8 @@
 
   const Auth = () => window.App.AuthService;
 
-  let cachedEntityType = null;
+  // Cache of list title -> ListItemEntityTypeFullName (e.g. "SP.Data.IssuesListItem").
+  const entityTypeCache = {};
 
   // ---------------------------------------------------------------------
   // Low-level request helper
@@ -79,15 +80,16 @@
 
   // The exact "entity type" string SharePoint requires in the __metadata
   // block of write payloads (e.g. "SP.Data.IssuesListItem") — fetched once
-  // and cached rather than guessed, since it doesn't always match the list
-  // name exactly (e.g. spaces/pluralization quirks).
-  async function getEntityType() {
-    if (cachedEntityType) return cachedEntityType;
+  // per list and cached rather than guessed, since it doesn't always match
+  // the list name exactly (e.g. spaces/pluralization quirks).
+  async function getEntityType(listName) {
+    listName = listName || ISSUES_LIST;
+    if (entityTypeCache[listName]) return entityTypeCache[listName];
     const data = await spRequest(
-      "web/lists/getbytitle('" + ISSUES_LIST + "')?$select=ListItemEntityTypeFullName"
+      "web/lists/getbytitle('" + listName + "')?$select=ListItemEntityTypeFullName"
     );
-    cachedEntityType = data.d.ListItemEntityTypeFullName;
-    return cachedEntityType;
+    entityTypeCache[listName] = data.d.ListItemEntityTypeFullName;
+    return entityTypeCache[listName];
   }
 
   // ---------------------------------------------------------------------
@@ -222,11 +224,82 @@
     });
   }
 
+  // Create a brand-new issue. The Issue ID (Title) is reserved from the
+  // Counters list via CounterService so two simultaneous creates can never
+  // land on the same number. Returns { ok, issue } or { ok:false, errors }.
+  async function createIssue(data) {
+    data = data || {};
+
+    const errors = {};
+    if (!data.mall) errors.mall = "Mall is required.";
+    if (!data.issue || !String(data.issue).trim()) errors.issue = "Issue description is required.";
+    if (!data.tenant || !String(data.tenant).trim()) errors.tenant = "Tenant is required.";
+    if (Object.keys(errors).length) return { ok: false, errors };
+
+    if (!window.App.CounterService) {
+      return { ok: false, errors: { general: "counterService.js is not loaded." } };
+    }
+
+    let issueId;
+    try {
+      issueId = await window.App.CounterService.getNextIssueId(data.mall);
+    } catch (e) {
+      return { ok: false, errors: { general: e.message } };
+    }
+
+    const now = new Date().toISOString();
+    const entityType = await getEntityType(ISSUES_LIST);
+
+    const payload = {
+      __metadata: { type: entityType },
+      Title: issueId,
+      Mall: data.mall,
+      IssueDescription: data.issue,
+      OutletNo: data.outletNo || null,
+      Tenant: data.tenant,
+      DateRaised: data.dateRaised || now,
+      AssignedTo: data.assignedTo || null,
+      Status: data.status || "New",
+      WaitingReason: data.waitingReason || null,
+      Priority: data.priority || "Medium",
+      Remarks: data.remarks || "",
+      IsReopened: false,
+      CreatedByUser: data.createdBy || null,
+      CreatedAtCustom: now,
+      UpdatedAt: now,
+    };
+
+    try {
+      await spRequest("web/lists/getbytitle('" + ISSUES_LIST + "')/items", {
+        method: "POST",
+        body: payload,
+      });
+    } catch (e) {
+      return {
+        ok: false,
+        errors: { general: "Issue ID " + issueId + " was reserved but the issue could not be saved: " + e.message },
+        reservedId: issueId,
+      };
+    }
+
+    const created = await getIssueById(issueId);
+    return { ok: true, issue: created };
+  }
+
   window.App.SPStorage = {
     getIssues,
     getIssueById,
+    createIssue,
     updateIssue,
     resolveIssue,
     reopenIssue,
+  };
+
+  // Low-level helper reused by counterService.js (and any future adapter
+  // module) so REST plumbing lives in exactly one place.
+  window.App.SP = {
+    request: spRequest,
+    getEntityType,
+    SITE_URL,
   };
 })();
