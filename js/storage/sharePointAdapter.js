@@ -139,6 +139,22 @@
   // ---------------------------------------------------------------------
   // Field mapping
   // ---------------------------------------------------------------------
+
+  // AssignedTo is a *multi-choice* column in SharePoint. On read it comes
+  // back as { results: [...] }; on write it must be sent as
+  // { __metadata: { type: "Collection(Edm.String)" }, results: [...] }.
+  // The app model treats assignee as a single person, so we read the first
+  // value and write a one-element collection.
+  function readMultiChoice(v) {
+    if (v && Array.isArray(v.results)) return v.results[0] || null;
+    if (Array.isArray(v)) return v[0] || null;
+    return v || null;
+  }
+  function writeMultiChoice(v) {
+    const arr = v === null || v === undefined || v === "" ? [] : [String(v)];
+    return { __metadata: { type: "Collection(Edm.String)" }, results: arr };
+  }
+
   function mapSpItemToIssue(item) {
     return {
       issueId: item.Title,
@@ -147,7 +163,7 @@
       outletNo: item.OutletNo,
       tenant: item.Tenant,
       dateRaised: item.DateRaised ? item.DateRaised.slice(0, 10) : null,
-      assignedTo: item.AssignedTo,
+      assignedTo: readMultiChoice(item.AssignedTo),
       status: item.Status,
       waitingReason: item.WaitingReason || null,
       priority: item.Priority,
@@ -187,7 +203,7 @@
     Object.keys(changes).forEach((key) => {
       const spField = FIELD_MAP[key];
       if (!spField) return; // unmapped/read-only field (e.g. issueId/createdBy/createdAt) — silently skip
-      payload[spField] = changes[key];
+      payload[spField] = key === "assignedTo" ? writeMultiChoice(changes[key]) : changes[key];
     });
     return payload;
   }
@@ -302,7 +318,7 @@
       OutletNo: data.outletNo || null,
       Tenant: data.tenant,
       DateRaised: data.dateRaised || now,
-      AssignedTo: data.assignedTo || null,
+      AssignedTo: writeMultiChoice(data.assignedTo),
       Status: data.status || "New",
       WaitingReason: data.waitingReason || null,
       Priority: data.priority || "Medium",
@@ -350,7 +366,7 @@
       OutletNo: issue.outletNo || null,
       Tenant: issue.tenant,
       DateRaised: issue.dateRaised || null,
-      AssignedTo: issue.assignedTo || null,
+      AssignedTo: writeMultiChoice(issue.assignedTo),
       Status: issue.status || "New",
       WaitingReason: issue.waitingReason || null,
       Priority: issue.priority || "Medium",

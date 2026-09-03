@@ -63,9 +63,17 @@
   // still shows the history for this session, and warn in the console
   // rather than failing the whole user action.
   async function safeLog(entry) {
+    // Attach the issue's mall so the ActivityLog "Mall" column is populated
+    // (enables native SharePoint filtering / reporting by mall).
+    let mall = entry.mall;
+    if (!mall && entry.issueId) {
+      const iss = issuesCache.find((i) => i.issueId === entry.issueId);
+      if (iss) mall = iss.mall;
+    }
     const enriched = Object.assign(
-      { entryId: "act-" + U().generateId(), timestamp: U().nowIso() },
-      entry
+      { entryId: "act-" + U().generateId(), timestamp: U().nowIso(), mall: mall || null },
+      entry,
+      mall ? { mall } : {}
     );
     try {
       const stored = await ActivityLog().append(enriched);

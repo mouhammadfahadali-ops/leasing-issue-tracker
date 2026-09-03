@@ -155,6 +155,7 @@
         try {
           await window.App.ActivityLog.append({
             entryId: title, timestamp: a.timestamp, issueId: a.issueId, actor: a.actor,
+            mall: (a.issueId || "").split("-")[0] || null,
             action: a.action, field: a.field, from: a.from, to: a.to, comment: a.comment,
             waitingReason: a.field === "waitingReason" ? a.to : null,
           });

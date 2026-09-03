@@ -6,11 +6,9 @@
    Builds on window.App.SP (low-level REST helper from sharePointAdapter.js).
    Exposed on window.App.ActivityLog
 
-   ┌──────────────────────────────────────────────────────────────────────┐
-   │  COLUMN MAP — verify these SharePoint *internal* names once against   │
-   │  the real list (open schema-check.html while signed in). Adjust the   │
-   │  right-hand side here if the list uses different internal names.      │
-   └──────────────────────────────────────────────────────────────────────┘
+   COLUMN MAP — confirmed against the real list via schema-check.html
+   (2026-09-03). The ActivityLog list also has a "Mall" choice column
+   (DMC/DMTR/DMH/DML) which we populate when the caller passes a mall.
    ========================================================================== */
 
 (function () {
@@ -21,15 +19,16 @@
   // app field  ->  SharePoint internal column name
   const FIELD_MAP = {
     entryId: "Title",
-    timestamp: "EntryTimestamp",
-    issueId: "IssueId",
+    timestamp: "Timestamp",
+    issueId: "IssueID",
+    mall: "Mall",
     actor: "Actor",
-    action: "ActionType",
+    action: "Action",
     field: "FieldName",
     from: "FromValue",
     to: "ToValue",
     comment: "Comment",
-    waitingReason: "WaitingReason",
+    waitingReason: "WaitingReasonAtChange",
   };
 
   const SP = () => {
@@ -47,6 +46,7 @@
       entryId: row[FIELD_MAP.entryId],
       timestamp: row[FIELD_MAP.timestamp] || row.Created,
       issueId: row[FIELD_MAP.issueId],
+      mall: row[FIELD_MAP.mall] || null,
       actor: row[FIELD_MAP.actor],
       action: row[FIELD_MAP.action],
       field: row[FIELD_MAP.field] || null,
@@ -63,11 +63,12 @@
     row[FIELD_MAP.entryId] = entry.entryId;
     row[FIELD_MAP.timestamp] = entry.timestamp;
     row[FIELD_MAP.issueId] = entry.issueId;
+    if (entry.mall) row[FIELD_MAP.mall] = entry.mall;
     row[FIELD_MAP.actor] = entry.actor || null;
     row[FIELD_MAP.action] = entry.action || null;
     row[FIELD_MAP.field] = entry.field || null;
-    row[FIELD_MAP.from] = entry.from === undefined ? null : entry.from;
-    row[FIELD_MAP.to] = entry.to === undefined ? null : entry.to;
+    row[FIELD_MAP.from] = entry.from === undefined || entry.from === null ? null : String(entry.from);
+    row[FIELD_MAP.to] = entry.to === undefined || entry.to === null ? null : String(entry.to);
     row[FIELD_MAP.comment] = entry.comment || null;
     row[FIELD_MAP.waitingReason] = entry.waitingReason || null;
     return row;
