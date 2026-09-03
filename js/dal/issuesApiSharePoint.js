@@ -128,6 +128,20 @@
     else issuesCache[idx] = issue;
   }
 
+  // Run an adapter write and normalise the outcome to the DAL's contract:
+  // always resolve to { ok, ... } — never throw — so the New Issue / Issue
+  // Detail forms can show a real reason inline instead of a generic toast.
+  async function guard(fn) {
+    try {
+      const res = await fn();
+      if (res && typeof res.ok === "boolean") return res;
+      return { ok: true, result: res };
+    } catch (e) {
+      console.error("SharePoint write failed:", e);
+      return { ok: false, errors: { general: e.message || "The change could not be saved to SharePoint." } };
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Bootstrap
   // ---------------------------------------------------------------------
@@ -327,7 +341,7 @@
     const errors = Validation().validateNewIssue(data);
     if (Validation().hasErrors(errors)) return { ok: false, errors };
 
-    const res = await SPStorage().createIssue({
+    const res = await guard(() => SPStorage().createIssue({
       mall: data.mall,
       issue: data.issue.trim(),
       outletNo: data.outletNo.trim(),
@@ -339,7 +353,7 @@
       priority: data.priority || "Medium",
       remarks: (data.remarks || "").trim(),
       createdBy: actor,
-    });
+    }));
     if (!res.ok) return res;
 
     const issue = res.issue;
@@ -371,7 +385,7 @@
     }
     changes.updatedAt = U().nowIso();
 
-    const res = await SPStorage().updateIssue(issueId, changes);
+    const res = await guard(() => SPStorage().updateIssue(issueId, changes));
     if (!res.ok) return res;
 
     const after = res.issue;
@@ -385,7 +399,7 @@
     if (!before) return { ok: false, errors: { general: "Issue not found." } };
 
     const note = resolutionNote && resolutionNote.trim() ? resolutionNote.trim() : null;
-    const res = await SPStorage().resolveIssue(issueId, actor, note || undefined);
+    const res = await guard(() => SPStorage().resolveIssue(issueId, actor, note || undefined));
     if (!res.ok) return res;
 
     const after = res.issue;
@@ -408,7 +422,7 @@
       return { ok: false, errors: { general: "Only resolved issues can be re-opened." } };
     }
 
-    const res = await SPStorage().reopenIssue(issueId);
+    const res = await guard(() => SPStorage().reopenIssue(issueId));
     if (!res.ok) return res;
 
     const after = res.issue;

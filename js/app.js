@@ -12,6 +12,19 @@
 (function () {
   window.App = window.App || {};
 
+  // Last-resort safety net: surface an otherwise-silent failure as a toast
+  // instead of leaving the user staring at a half-rendered screen.
+  window.addEventListener("unhandledrejection", (ev) => {
+    console.error("Unhandled promise rejection:", ev.reason);
+    if (window.App.Components && window.App.Components.Toast) {
+      const r = ev.reason;
+      const msg = r && r.message && r.status !== undefined
+        ? r.message
+        : "Something went wrong. Please try again.";
+      window.App.Components.Toast.show(msg);
+    }
+  });
+
   async function renderShell() {
     window.App.Components.MallSelector.render(); // sync — reads only local UI state
     await window.App.Components.UserSelector.render();
@@ -61,7 +74,10 @@
       initResult = await window.App.DAL.init();
     } catch (e) {
       console.error("Failed to initialize the app:", e);
-      window.App.Components.Toast.show("Unable to load your data. Please refresh the page.");
+      const msg = e && e.message && e.status !== undefined
+        ? e.message
+        : "Unable to load your data. Please refresh the page.";
+      window.App.Components.Toast.show(msg);
       return;
     }
 

@@ -60,22 +60,66 @@
 
     const fetchMethod = method === "GET" ? "GET" : "POST";
 
-    const res = await fetch(url, {
-      method: fetchMethod,
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-    });
+    let res;
+    try {
+      res = await fetch(url, {
+        method: fetchMethod,
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      });
+    } catch (e) {
+      // Network-level failure (offline, DNS, CORS, blocked) — fetch rejects
+      // before there's any response.
+      const err = new Error("Couldn't reach SharePoint. Check your connection and try again.");
+      err.status = 0;
+      err.cause = e;
+      throw err;
+    }
 
     if (!res.ok) {
-      const err = new Error("SharePoint request failed (HTTP " + res.status + ")");
-      err.status = res.status;
+      let spMessage = "";
+      let body = null;
       try {
-        err.body = await res.json();
-      } catch (e) { /* not JSON — ignore */ }
+        body = await res.json();
+        spMessage =
+          (body && body.error && body.error.message && body.error.message.value) ||
+          (body && body["odata.error"] && body["odata.error"].message && body["odata.error"].message.value) ||
+          "";
+      } catch (e) { /* not JSON */ }
+
+      const err = new Error(friendlyHttp(res.status, spMessage));
+      err.status = res.status;
+      err.spMessage = spMessage;
+      err.body = body;
       throw err;
     }
     if (res.status === 204) return null;
     return res.json();
+  }
+
+  // Turn an HTTP status (+ SharePoint's own message when present) into
+  // something a leasing user can act on.
+  function friendlyHttp(status, spMessage) {
+    switch (status) {
+      case 400:
+        return spMessage
+          ? "SharePoint rejected the data: " + spMessage
+          : "SharePoint rejected the request. A field value may not match its column (e.g. a name that isn't one of the allowed choices).";
+      case 401:
+        return "Your session has expired. Please sign in again.";
+      case 403:
+        return "You don't have permission to do this in the SharePoint site. Ask the site owner to grant you Edit access.";
+      case 404:
+        return "That item no longer exists in SharePoint — it may have been deleted. Refresh and try again.";
+      case 412:
+        return "This item was changed by someone else. Refresh to get the latest version, then re-apply your change.";
+      case 429:
+      case 503:
+        return "SharePoint is busy right now. Wait a few seconds and try again.";
+      default:
+        if (status >= 500) return "SharePoint had a server error (HTTP " + status + "). Try again shortly.";
+        return spMessage || "SharePoint request failed (HTTP " + status + ").";
+    }
   }
 
   // The exact "entity type" string SharePoint requires in the __metadata

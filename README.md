@@ -59,7 +59,7 @@ js/dal/issuesApiLocal.js         The DAL, localStorage edition (the original V1 
 | 5 | Dashboard KPIs + Recent Activity from real data | ✅ runs on real data via the SharePoint DAL — awaiting live test |
 | 6 | Export to CSV (opens in Excel) | ✅ built — "Export CSV" on Active Issues + Resolved/Archive, respects current filters |
 | 7 | One-time migration of the 19 demo issues | ✅ built — `migrate.html` (idempotent, dry-run preflight, typed confirm); awaiting live run |
-| 8 | Final polish — friendly errors, edge cases, full test pass | in progress |
+| 8 | Final polish — friendly errors, edge cases, full test pass | error handling done; full test pass needs the live run |
 | — | Light + dark premium glass theme upgrade | not started (spec captured) |
 
 The official Dolmen logo goes in `assets/` (see `assets/README.md`). Until it's
