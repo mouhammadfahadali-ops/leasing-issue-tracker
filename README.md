@@ -1,27 +1,50 @@
-# Leasing Issue Tracker
+# Leasing Matters
 
 Internal web app for Dolmen's Leasing & Contracts team to track leasing issues across all
 four malls (DMC, DMTR, DMH, DML). Plain HTML/CSS/JS — no framework, no build step.
 
-**Architecture:** UI → DAL → Storage Adapter. Production storage is SharePoint
-(`sites/DolmenLeasing`), reached over the REST API with an Entra/MSAL Bearer token.
+**Architecture:** UI → DAL (`window.App.DAL`, all async) → storage. Two interchangeable
+back ends selected by `js/config.js`:
+
+| Mode | `?storage=` | Back end |
+|---|---|---|
+| `sharepoint` (default) | `?storage=sharepoint` | Microsoft sign-in (MSAL) + the SharePoint lists on `sites/DolmenLeasing` |
+| `local` | `?storage=local` | browser localStorage + 19 seeded demo issues (offline demo, no login) |
+
+Every UI component is identical in both modes — only the DAL + storage scripts differ.
 
 Live: <https://mouhammadfahadali-ops.github.io/leasing-issue-tracker/>
 
 ## Files
 
 ```
-index.html                     Phase 1 test — Entra sign-in + one authenticated SharePoint call
-phase2-test.html               Phase 2 test — Issues list read / edit / resolve / re-open
-phase3-test.html               Phase 3 test — Counters + collision-proof Issue ID generation + create
-js/auth/authService.js         MSAL.js wrapper — sign-in, silent token acquisition
+index.html                       The app. Loads the SharePoint or local stack per js/config.js
+phase1-test.html                 Phase 1 test — Entra sign-in + one authenticated SharePoint call
+phase2-test.html                 Phase 2 test — Issues list read / edit / resolve / re-open
+phase3-test.html                 Phase 3 test — Counters + collision-proof Issue ID generation + create
+schema-check.html                Signed-in dump of every column (internal name + type) in all 3 lists
+
+js/config.js                     STORAGE_MODE switch + shared constants
+js/utils.js  js/dal/validation.js  js/state/appState.js   Shared, mode-independent
+js/components/*.js                The UI (unchanged from the V1 prototype bar 2 mode-aware tweaks)
+css/*.css                        The V1 Apple/iOS glass design system (untouched)
+
+  — SharePoint stack —
+js/auth/authService.js           MSAL.js wrapper — sign-in, logout, silent token acquisition
+js/auth/authGate.js              Full-screen glass sign-in panel; gates the app until signed in
 js/storage/sharePointAdapter.js  Issues-list REST calls, field mapping, ETag concurrency, createIssue
-js/storage/counterService.js   Counters-list Issue ID reservation (retry-on-412 safe increment)
+js/storage/counterService.js     Counters-list Issue ID reservation (retry-on-412 safe increment)
+js/storage/activityLogAdapter.js ActivityLog list — append-only audit trail
+js/dal/issuesApiSharePoint.js    The DAL, SharePoint edition (in-memory mirror + write-through)
+
+  — local demo stack —
+js/storage/mockData.js  js/storage/localStorageAdapter.js  js/dal/idGenerator.js
+js/dal/issuesApiLocal.js         The DAL, localStorage edition (the original V1 issuesApi.js)
 ```
 
-`sharePointAdapter.js` also exposes a low-level `window.App.SP` helper
-(`request`, `getEntityType`, `SITE_URL`) that `counterService.js` builds on, so the
-REST plumbing lives in one place.
+`sharePointAdapter.js` exposes a low-level `window.App.SP` helper
+(`request`, `getEntityType`, `SITE_URL`) that `counterService.js` and
+`activityLogAdapter.js` build on, so the REST plumbing lives in one place.
 
 ## Phase status
 
@@ -30,11 +53,13 @@ REST plumbing lives in one place.
 | 1 | Entra/MSAL authentication | ✅ done & live-tested |
 | 2 | Issues adapter — read / edit / resolve / re-open | ✅ done & live-tested |
 | 3 | Counters — collision-proof Issue ID generation + `createIssue` | ✅ built — awaiting live test |
-| 4 | ActivityLog — write the audit trail on every change | not started |
-| 5 | Dashboard KPIs + Recent Activity from real data | not started |
+| — | **V1 glassmorphism UI wired to SharePoint** (real DAL, auth gate, real user) | ✅ built — awaiting live test |
+| 4 | ActivityLog audit trail | ✅ built into the SharePoint DAL — awaiting live test + column-map confirmation |
+| 5 | Dashboard KPIs + Recent Activity from real data | ✅ runs on real data via the SharePoint DAL — awaiting live test |
 | 6 | Export to Excel/CSV | not started |
 | 7 | One-time migration of the 19 demo issues | not started |
 | 8 | Final polish — friendly errors, edge cases, full test pass | not started |
+| — | Light + dark premium glass theme upgrade | not started (spec captured) |
 
 ## How Issue IDs work (Phase 3)
 
@@ -57,11 +82,21 @@ results are 5 distinct, gap-free sequence numbers.
 ## Testing
 
 Sign-in only works from the deployed GitHub Pages origin (the Entra redirect URI is
-registered for that exact URL), so testing is: push to `main` → wait for Pages to
-publish → open the relevant `*-test.html` on the live site and sign in.
+registered for that exact URL), so SharePoint testing is: push to `main` → wait for
+Pages to publish → open the site and sign in.
 
-Serving the files from `localhost` is only useful for checking that the scripts parse
-and load — the sign-in step will not complete.
+Locally you can still run the full app in demo mode with no login:
+`index.html?storage=local`. Serving from `localhost` in `sharepoint` mode only gets
+you as far as the sign-in screen.
+
+### First live SharePoint run — order of checks
+
+1. Open `schema-check.html`, sign in. Confirm the **ActivityLog** and **Counters**
+   internal column names match the maps in `js/storage/activityLogAdapter.js`
+   (`FIELD_MAP`) and `js/storage/counterService.js`. Adjust if they differ.
+2. Fix the choice columns below.
+3. Open `index.html`, sign in, exercise Dashboard / Active / Archive / New Issue /
+   Issue Detail / re-open. Watch the browser console.
 
 ## Known data fix-ups still needed in SharePoint
 
